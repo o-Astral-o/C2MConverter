@@ -11,7 +11,7 @@ public class Program
 
         string filePath;
 #if DEBUG
-        filePath = @"D:\mp_m_showers.c2m";
+        filePath = @"D:\Shipment - mp_shipment\mp_shipment.c2m";
 #else
             if(args.Length < 0)
             {
@@ -27,7 +27,8 @@ public class Program
             }
 #endif
         var c2m = new C2M(File.ReadAllBytes(filePath));
+        var directory = Path.GetDirectoryName(filePath);
 
-        c2m.SaveAsCast(Directory.GetCurrentDirectory());
+        c2m.SaveAsCast(directory);
     }
 }

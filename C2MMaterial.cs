@@ -21,8 +21,8 @@ public class C2MMaterial
         for (int i = 0; i < texturesCount; i++)
         {
             var textureName = reader.ReadUtf8String();
-            var texturePath = reader.ReadUtf8String();
-            Textures[textureName] = texturePath;
+            var textureType = reader.ReadUtf8String();
+            Textures[textureType] = textureName;
         }
 
         //can't believe the fact that i have access to the source code

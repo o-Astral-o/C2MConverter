@@ -82,55 +82,31 @@ public class C2MObject
             meshNode.AddValue<ulong>("m", materialNode.Hash);
             objectGeo.AddNode(materialNode);
 
-            //basically you get a list of used vertice in the original object
-            //then remap them to your new one
-            var indexes = surface.Faces.Distinct().ToArray();
-            var count = indexes.Count();
-
-            CastArrayProperty<Vector3> positions = meshNode.AddArray<Vector3>("vp", count);
-            CastArrayProperty<Vector3> normals = meshNode.AddArray<Vector3>("vn", count);
-            var uvLayersCount = 1;
-
             Dictionary<uint, ushort> RemappedIndex = new();
+            CastArrayProperty<Vector3> positions = meshNode.AddArray<Vector3>("vp");
+            CastArrayProperty<Vector3> normals = meshNode.AddArray<Vector3>("vn");
+            CastArrayProperty<Vector2> uv0 = meshNode.AddArray<Vector2>("u0");
 
-            for(ushort i = 0; i < count; i++)
+            ushort current = 0;
+            foreach (var index in surface.Faces)
             {
-                var originalIndice = indexes[i];
-                RemappedIndex[originalIndice] = i;
-
-                positions.Values.Add(Vertices[originalIndice]);
-                normals.Values.Add(Normals[originalIndice]);
-                var layersCount = UVs[(int)originalIndice].Count();
-                if (layersCount > uvLayersCount) uvLayersCount = layersCount;
-
-                for (int layer = 0; layer < layersCount; layer++)
+                if (!RemappedIndex.ContainsKey(index))
                 {
-                    var layerKey = $"u{layer}";
-                    if (meshNode.TryGetArrayProperty<Vector2>(layerKey, out CastArrayProperty<Vector2> uv))
-                    {
-                        uv.Values.Add(UVs[(int)originalIndice][layer]);
-                    }
-                    else
-                    {
-                        uv = meshNode.AddArray<Vector2>(layerKey, count);
-                        uv.Values.Add(UVs[(int)originalIndice][layer]);
-                    }
+                    RemappedIndex[index] = current++;
+                    positions.Values.Add(Vertices[index]);
+                    normals.Values.Add(Normals[index]);
+                    uv0.Values.Add(UVs[(int)index][0]);
                 }
             }
 
-            meshNode.AddValue("ul", (uint)uvLayersCount);
+            meshNode.AddValue("ul", (uint)1);
 
-            CastArrayProperty<ushort> faceIndices = meshNode.AddArray<ushort>("f", (int)surface.FacesCount);
+            CastArrayProperty<ushort> faceIndices = meshNode.AddArray<ushort>("f");
             for (int i = 0; i < surface.FacesCount; i += 3)
             {
-                var a = RemappedIndex[surface.Faces[i]];
-                var b = RemappedIndex[surface.Faces[i + 1]];
-                var c = RemappedIndex[surface.Faces[i + 2]];
-
-                //cast follows CCW winding order
-                faceIndices.Values.Add(a);
-                faceIndices.Values.Add(b);
-                faceIndices.Values.Add(c);
+                faceIndices.Values.Add(RemappedIndex[surface.Faces[i]]);
+                faceIndices.Values.Add(RemappedIndex[surface.Faces[i + 1]]);
+                faceIndices.Values.Add(RemappedIndex[surface.Faces[i + 2]]);
             }
 
             objectGeo.AddNode(meshNode);
