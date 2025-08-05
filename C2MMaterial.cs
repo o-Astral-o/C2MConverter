@@ -1,5 +1,6 @@
 ﻿using C2MConverter.Utils;
 using Serilog;
+using System.Reflection.Metadata;
 
 namespace C2MConverter;
 
@@ -7,26 +8,45 @@ public class C2MMaterial
 {
     public string Name;
     public string TechSet;
+    public string SurfType;
+    public byte Blending;
     public byte SortKey;
     public Dictionary<string, string> Textures;
 
     public C2MMaterial(BinaryReader reader)
     {
         Name = reader.ReadUtf8String();
-        //bro what the fuck is going on????
-        TechSet = reader.ReadNullTerminatedString();
+        TechSet = reader.ReadUtf8String();
+        SurfType = reader.ReadUtf8String();
+
+        Blending = reader.ReadByte();
         SortKey = reader.ReadByte();
         var texturesCount = reader.ReadByte();
+        var constantsCount = reader.ReadByte();
+
         Textures = new Dictionary<string, string>();
         for (int i = 0; i < texturesCount; i++)
         {
             var textureName = reader.ReadUtf8String();
             var textureType = reader.ReadUtf8String();
+
+            if(textureType == "colorMap")
+            {
+                textureType = "diffuse_map";
+            }else if(textureType == "nogMap")
+            {
+                textureType = "nog_map";
+            }
             Textures[textureType] = textureName;
         }
 
-        //can't believe the fact that i have access to the source code
-        //i still don't know what is this and whys there a null byte here
-        var unk0 = reader.ReadByte();
+        for(int i = 0; i < constantsCount; i++)
+        {
+            reader.ReadUInt32();
+            reader.ReadSingle();
+            reader.ReadSingle();
+            reader.ReadSingle();
+            reader.ReadSingle();
+        }
     }
 }

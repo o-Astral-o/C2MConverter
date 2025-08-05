@@ -11,7 +11,7 @@ public class Program
 
         string filePath;
 #if DEBUG
-        filePath = @"D:\Shipment - mp_shipment\mp_shipment.c2m";
+        filePath = @"mp_jup_security_area.c2m";
 #else
             if(args.Length < 0)
             {

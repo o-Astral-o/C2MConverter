@@ -22,25 +22,25 @@ public class C2MObject
     public C2MObject(BinaryReader reader)
     {
         Name = reader.ReadUtf8String();
-        IsXModel = reader.ReadBoolean();
-
         var vertexCount = reader.ReadUInt32();
+        var surfaceCount = reader.ReadUInt32();
+        var faceCount = reader.ReadUInt32();
+        var lodCount = reader.ReadUInt32();
+        var lodDistance = reader.ReadSingle();
+
         Vertices = new Vector3[vertexCount];
+        Normals = new Vector3[vertexCount];
         for (int i = 0; i < vertexCount; i++)
         {
             Vertices[i] = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
         }
-
-        var normalCount = reader.ReadUInt32();
-        Normals = new Vector3[normalCount];
-        for (int i = 0; i < normalCount; i++)
+        for (int i = 0; i < vertexCount; i++)
         {
             Normals[i] = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
         }
 
-        var uvCount = reader.ReadUInt32();
         UVs = new List<Vector2[]>();
-        for(int i = 0; i < uvCount; i++)
+        for(int i = 0; i < vertexCount; i++)
         {
             var uvSetCount = reader.ReadUInt32();
             var uvs = new Vector2[uvSetCount];
@@ -51,19 +51,19 @@ public class C2MObject
             UVs.Add(uvs);
         }
 
-        var colorCount = reader.ReadUInt32();
-        Colors = new RBGA[colorCount];
-        for (int i = 0; i < colorCount; i++)
+        Colors = new RBGA[vertexCount];
+        for (int i = 0; i < vertexCount; i++)
         {
             Colors[i] = new RBGA(reader.ReadByte(), reader.ReadByte(), reader.ReadByte(), reader.ReadByte());
         }
 
-        var surfaceCount = reader.ReadUInt32();
         Surfaces = new C2MSurface[surfaceCount];
         for (int i = 0; i < surfaceCount; i++)
         {
             Surfaces[i] = new C2MSurface(reader);
         }
+
+        //todo lod handling :(
     }
 
     public ModelNode ToCast()
@@ -74,9 +74,10 @@ public class C2MObject
         
         // I don't like this, C2M handles their surface differently
         // it's a little bit annoying to deal with but whatever
+
         foreach(var surface in Surfaces)
         {
-            var materialNode = new MaterialNode(surface.Materials.First(), "pbr");
+            var materialNode = new MaterialNode(surface.Name, "pbr");
             var meshNode = new MeshNode();
             meshNode.AddString("n", surface.Name);
             meshNode.AddValue<ulong>("m", materialNode.Hash);

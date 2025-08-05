@@ -6,20 +6,22 @@ namespace C2MConverter;
 public class C2MSurface
 {
     public string Name;
-    public string[] Materials;
+    public byte UvCount;
+    public ushort[] Materials;
     public uint FacesCount;
     public uint[] Faces;
 
     public C2MSurface(BinaryReader reader)
     {
         Name = reader.ReadUtf8String();
-        Log.Debug("Reading surface: {SurfaceName}", Name);
-        var materialsCount = reader.ReadUInt32();
-        Materials = new string[materialsCount];
+        UvCount = reader.ReadByte();
+
+        var materialsCount = reader.ReadByte();
+        Materials = new ushort[materialsCount];
         
         for (int i = 0; i < materialsCount; i++)
         {
-            Materials[i] = reader.ReadUtf8String();
+            Materials[i] = reader.ReadUInt16();
         }
 
         FacesCount = reader.ReadUInt32() * 3;

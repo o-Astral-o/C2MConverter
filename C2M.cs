@@ -34,18 +34,22 @@ public class C2M
         }
 
         Version = binaryReader.ReadByte();
-        if (Version != 1)
-        {
-            Log.Error($"Unsupported C2M version: {Version}. Only version 1 is supported.");
-            return;
-        }
-
         MapVersion = binaryReader.ReadByte();
         Name = binaryReader.ReadUtf8String();
         SkyboxInfo = binaryReader.ReadUtf8String();
         var objectCount = binaryReader.ReadUInt32();
+        var objectOffset = binaryReader.ReadUInt64();
+        var instanceCount = binaryReader.ReadUInt32();
+        var instanceOffset = binaryReader.ReadUInt64();
+        var imagesCount = binaryReader.ReadUInt32();
+        var imageOffset = binaryReader.ReadUInt64();
+        var materialsCount = binaryReader.ReadUInt32();
+        var materialsOffset = binaryReader.ReadUInt64();
+        var lightsCount = binaryReader.ReadUInt32();
+        var lightsOffset = binaryReader.ReadUInt64();
+        var mapEntsOffset = binaryReader.ReadUInt64();
 
-        Log.Information($"C2M file loaded: Version {Version}, Map Version {MapVersion}, Name: {Name}, Skybox: {SkyboxInfo}, Object Count: {objectCount}");
+        Log.Information($"C2M Version: {Version}, Map Version: {MapVersion}, Name: {Name}, Skybox Info: {SkyboxInfo}");
 
         Objects = new C2MObject[objectCount];
         for (int i = 0; i < objectCount; i++)
@@ -54,17 +58,14 @@ public class C2M
         }
 
         Log.Information($"Loaded {Objects.Length} objects from C2M file.");
-
-        var materialCount = binaryReader.ReadUInt32();
-        Materials = new C2MMaterial[materialCount];
-        for (int i = 0; i < materialCount; i++)
+        Materials = new C2MMaterial[materialsCount];
+        for (int i = 0; i < materialsCount; i++)
         {
             Materials[i] = new C2MMaterial(binaryReader);
         }
 
         Log.Information($"Loaded {Materials.Length} materials from C2M file.");
 
-        var instanceCount = binaryReader.ReadUInt32();
         ModelInstances = new C2MInstance[instanceCount];
         for (int i = 0; i < instanceCount; i++)
         {
