@@ -23,4 +23,8 @@ public class RBGA
     {
         return $"R: {R}, G: {G}, B: {B}, A: {A}";
     }
+    public uint PackRGBA()
+    {
+        return ((uint)R << 24) | ((uint)G << 16) | ((uint)B << 8) | A;
+    }
 }

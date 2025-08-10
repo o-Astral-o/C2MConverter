@@ -55,6 +55,10 @@ public class C2MObject
         for (int i = 0; i < vertexCount; i++)
         {
             Colors[i] = new RBGA(reader.ReadByte(), reader.ReadByte(), reader.ReadByte(), reader.ReadByte());
+            if (Name == "un_military_weapon_locker_02")
+            {
+                Log.Information("Color {i}: {color}", i, Colors[i]);
+            }
         }
 
         Surfaces = new C2MSurface[surfaceCount];
@@ -86,7 +90,9 @@ public class C2MObject
             Dictionary<uint, ushort> RemappedIndex = new();
             CastArrayProperty<Vector3> positions = meshNode.AddArray<Vector3>("vp");
             CastArrayProperty<Vector3> normals = meshNode.AddArray<Vector3>("vn");
-            CastArrayProperty<Vector2> uv0 = meshNode.AddArray<Vector2>("u0");
+            CastArrayProperty<uint> colors = meshNode.AddArray<uint>("c0");
+
+            uint uvLayersCount = 1;
 
             ushort current = 0;
             foreach (var index in surface.Faces)
@@ -96,11 +102,28 @@ public class C2MObject
                     RemappedIndex[index] = current++;
                     positions.Values.Add(Vertices[index]);
                     normals.Values.Add(Normals[index]);
-                    uv0.Values.Add(UVs[(int)index][0]);
+                    colors.Values.Add(Colors[index].PackRGBA());
+                    var uvs = UVs[(int)index];
+                    var layersCount = (uint)uvs.Count();
+                    if (layersCount > uvLayersCount) uvLayersCount = layersCount;
+                    for (int layer = 0; layer < layersCount; layer++)
+                    {
+                        var layerKey = $"u{layer}";
+                        if (meshNode.TryGetArrayProperty<Vector2>(layerKey, out CastArrayProperty<Vector2> uv))
+                        {
+                            uv.Values.Add(uvs[layer]);
+                        }
+                        else
+                        {
+                            uv = meshNode.AddArray<Vector2>(layerKey);
+                            uv.Values.Add(uvs[layer]);
+                        }
+                    }
                 }
             }
 
-            meshNode.AddValue("ul", (uint)1);
+            meshNode.AddValue("ul", (uint)uvLayersCount);
+            meshNode.AddValue("cl", (uint)1);
 
             CastArrayProperty<ushort> faceIndices = meshNode.AddArray<ushort>("f");
             for (int i = 0; i < surface.FacesCount; i += 3)
