@@ -55,10 +55,6 @@ public class C2MObject
         for (int i = 0; i < vertexCount; i++)
         {
             Colors[i] = new RBGA(reader.ReadByte(), reader.ReadByte(), reader.ReadByte(), reader.ReadByte());
-            if (Name == "un_military_weapon_locker_02")
-            {
-                Log.Information("Color {i}: {color}", i, Colors[i]);
-            }
         }
 
         Surfaces = new C2MSurface[surfaceCount];
@@ -109,14 +105,15 @@ public class C2MObject
                     for (int layer = 0; layer < layersCount; layer++)
                     {
                         var layerKey = $"u{layer}";
+                        var reinvertUv = new Vector2(uvs[layer].X, 1.0f - uvs[layer].Y);
                         if (meshNode.TryGetArrayProperty<Vector2>(layerKey, out CastArrayProperty<Vector2> uv))
                         {
-                            uv.Values.Add(uvs[layer]);
+                            uv.Values.Add(reinvertUv);
                         }
                         else
                         {
                             uv = meshNode.AddArray<Vector2>(layerKey);
-                            uv.Values.Add(uvs[layer]);
+                            uv.Values.Add(reinvertUv);
                         }
                     }
                 }
