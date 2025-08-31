@@ -16,6 +16,10 @@ public class C2MMaterial
     public C2MMaterial(BinaryReader reader)
     {
         Name = reader.ReadUtf8String();
+        if (Name.StartsWith("*"))
+        {
+            Name = Name.TrimStart('*');
+        }
         TechSet = reader.ReadUtf8String();
         SurfType = reader.ReadUtf8String();
 
@@ -30,13 +34,23 @@ public class C2MMaterial
             var textureName = reader.ReadUtf8String();
             var textureType = reader.ReadUtf8String();
 
-            if(textureType == "colorMap")
+            if (textureType.Contains("colorMap"))
             {
-                textureType = "diffuse_map";
-            }else if(textureType == "nogMap")
-            {
-                textureType = "nog_map";
+                textureType = textureType.Replace("colorMap", "diffuse_map");
             }
+            else if (textureType.Contains("nogMap"))
+            {
+                textureType = textureType.Replace("nogMap", "nog_map");
+            }
+            else if (textureType.Contains("revealMap"))
+            {
+                textureType = textureType.Replace("revealMap", "reveal_map");
+            }
+            else if (textureType.Contains("opacityMap"))
+            {
+                textureType = textureType.Replace("opacityMap", "opacity_map");
+            }
+
             Textures[textureType] = textureName;
         }
 
