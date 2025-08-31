@@ -22,6 +22,7 @@ public class C2M
     public C2MObject[] Objects;
     public C2MMaterial[] Materials;
     public C2MInstance[] ModelInstances;
+    public C2MDynamicInstance[] DynamicInstances;
 
     public C2M(byte[] data)
     {
@@ -39,7 +40,8 @@ public class C2M
         SkyboxInfo = binaryReader.ReadUtf8String();
         var objectCount = binaryReader.ReadUInt32();
         var objectOffset = binaryReader.ReadUInt64();
-        var instanceCount = binaryReader.ReadUInt32();
+        var staticInstanceCount = binaryReader.ReadUInt32();
+        var dynamicInstanceCount = binaryReader.ReadUInt32();
         var instanceOffset = binaryReader.ReadUInt64();
         var imagesCount = binaryReader.ReadUInt32();
         var imageOffset = binaryReader.ReadUInt64();
@@ -51,13 +53,14 @@ public class C2M
 
         Log.Information($"C2M Version: {Version}, Map Version: {MapVersion}, Name: {Name}, Skybox Info: {SkyboxInfo}");
 
+        binaryReader.BaseStream.Seek((long)objectOffset, SeekOrigin.Begin);
         Objects = new C2MObject[objectCount];
         for (int i = 0; i < objectCount; i++)
         {
             Objects[i] = new C2MObject(binaryReader);
         }
-
-        Log.Information($"Loaded {Objects.Length} objects from C2M file.");
+        
+        binaryReader.BaseStream.Seek((long)materialsOffset, SeekOrigin.Begin);
         Materials = new C2MMaterial[materialsCount];
         for (int i = 0; i < materialsCount; i++)
         {
@@ -66,13 +69,21 @@ public class C2M
 
         Log.Information($"Loaded {Materials.Length} materials from C2M file.");
 
-        ModelInstances = new C2MInstance[instanceCount];
-        for (int i = 0; i < instanceCount; i++)
+        binaryReader.BaseStream.Seek((long)instanceOffset, SeekOrigin.Begin);
+        ModelInstances = new C2MInstance[staticInstanceCount];
+        for (int i = 0; i < staticInstanceCount; i++)
         {
             ModelInstances[i] = new C2MInstance(binaryReader);
         }
 
+        DynamicInstances = new C2MDynamicInstance[dynamicInstanceCount];
+        for (int i = 0; i < dynamicInstanceCount; i++)
+        {
+            DynamicInstances[i] = new C2MDynamicInstance(binaryReader);
+        }
+
         Log.Information($"Loaded {ModelInstances.Length} model instances from C2M file.");
+        Log.Information($"Loaded {DynamicInstances.Length} dynamic instances from C2M file.");
 
         binaryReader.Close();
     }
@@ -133,6 +144,21 @@ public class C2M
             propRoot.AddNode(instanceNode);
         }
 
+        foreach(var instance in DynamicInstances)
+        {
+            var fileNode = new FileNode();
+            fileNode.AddString("p", $"models/{instance.Name}.cast");
+
+            var instanceNode = new InstanceNode();
+            instanceNode.AddString("n", $"{instance.Name}_{count++}");
+            instanceNode.AddValue("rf", fileNode.Hash);
+            instanceNode.AddValue("p", instance.Position);
+            instanceNode.AddValue("r", new Vector4(instance.Rotation.X, instance.Rotation.Y, instance.Rotation.Z, instance.Rotation.W));
+            instanceNode.AddValue("s", instance.Scale);
+            instanceNode.AddNode(fileNode);
+            propRoot.AddNode(instanceNode);
+        }
+
         CastWriter.Save(Path.Join(directory, "mapInstances.cast"), propRoot);
 
         var materials = Path.Combine(directory, "materials");
@@ -140,6 +166,7 @@ public class C2M
         {
             Directory.CreateDirectory(materials);
         }
+
         foreach (var material in Materials)
         {
             var semantic = new StringBuilder();
