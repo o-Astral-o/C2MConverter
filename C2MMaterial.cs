@@ -1,5 +1,6 @@
 ﻿using C2MConverter.Utils;
 using Serilog;
+using System.Numerics;
 using System.Reflection.Metadata;
 
 namespace C2MConverter;
@@ -56,11 +57,10 @@ public class C2MMaterial
 
         for(int i = 0; i < constantsCount; i++)
         {
-            reader.ReadUInt32();
-            reader.ReadSingle();
-            reader.ReadSingle();
-            reader.ReadSingle();
-            reader.ReadSingle();
+            var constantName = reader.ReadUtf8String();
+            var constantHash = reader.ReadUInt32();
+            var constantType = reader.ReadByte();
+            var constantValue = new Vector4(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
         }
     }
 }
