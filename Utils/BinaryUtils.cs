@@ -10,11 +10,15 @@ public static class BinaryUtils
 {
     public static string ReadUtf8String(this BinaryReader reader)
     {
-        var length = reader.ReadByte();
-        if (length == 0) return string.Empty;
-
-        var bytes = reader.ReadBytes(length);
-        return Encoding.UTF8.GetString(bytes).TrimEnd('\0');
+        reader.BaseStream.Seek(1, SeekOrigin.Current);
+        List<char> chars = new List<char>();
+        char c;
+        // Start reading characters until we hit '\x00'
+        while ((c = reader.ReadChar()) != '\0')
+        {
+            chars.Add(c);
+        }
+        return new string(chars.ToArray());
     }
 
     public static string ReadNullTerminatedString(this BinaryReader reader)

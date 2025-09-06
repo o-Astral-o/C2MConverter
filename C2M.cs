@@ -19,7 +19,7 @@ public class C2M
     public string SkyboxInfo;
 
     //Object
-    public C2MObject[] Objects;
+    public C2Mesh[] Objects;
     public C2MMaterial[] Materials;
     public C2MInstance[] ModelInstances;
     public C2MDynamicInstance[] DynamicInstances;
@@ -54,10 +54,10 @@ public class C2M
         Log.Information($"C2M Version: {Version}, Map Version: {MapVersion}, Name: {Name}, Skybox Info: {SkyboxInfo}");
 
         binaryReader.BaseStream.Seek((long)objectOffset, SeekOrigin.Begin);
-        Objects = new C2MObject[objectCount];
+        Objects = new C2Mesh[objectCount];
         for (int i = 0; i < objectCount; i++)
         {
-            Objects[i] = new C2MObject(binaryReader);
+            Objects[i] = new C2Mesh(binaryReader);
         }
         
         binaryReader.BaseStream.Seek((long)materialsOffset, SeekOrigin.Begin);

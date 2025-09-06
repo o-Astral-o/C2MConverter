@@ -7,7 +7,7 @@ using System;
 
 namespace C2MConverter;
 
-public class C2MObject
+public class C2Mesh
 {
     public string Name;
     public bool IsXModel;
@@ -18,8 +18,10 @@ public class C2MObject
     public RBGA[] Colors;
 
     public C2MSurface[] Surfaces;
+    
+    public C2MeshLOD[] LODs;
 
-    public C2MObject(BinaryReader reader)
+    public C2Mesh(BinaryReader reader)
     {
         Name = reader.ReadUtf8String();
         var vertexCount = reader.ReadUInt32();
@@ -63,7 +65,11 @@ public class C2MObject
             Surfaces[i] = new C2MSurface(reader);
         }
 
-        //todo lod handling :(
+        LODs = new C2MeshLOD[lodCount];
+        for (int i = 0; i < lodCount; i++)
+        {
+            LODs[i] = new C2MeshLOD(reader);
+        }
     }
 
     public ModelNode ToCast()
